@@ -125,6 +125,7 @@ int
 main(int argc, char *argv[])
 {
 	int c;
+	int r;
 	char path[MAXPATHLEN + 1];
 	char subtree[MAXPATHLEN + 1] = "./";
 	char *tstampfile = ".build.tstamp";
@@ -200,7 +201,8 @@ usage:		(void) fprintf(stderr, "usage: %s [-s <subtree>] "
 	if (chdir(argv[0]) == -1)
 		die("cannot change directory to \"%s\"", argv[0]);
 
-	if (nftw(subtree, checkpath, 100, FTW_PHYS) != 0)
+	if ((r = nftw(subtree, checkpath, 100, FTW_PHYS)) != 0
+	    && r != FTW_SKIP_SUBTREE)
 		die("cannot walk tree rooted at \"%s\"\n", argv[0]);
 
 	pnset_empty(exsetp);
@@ -465,7 +467,7 @@ checkpath(const char *path, const struct stat *statp, int type,
 		 * Prune any directories in the exception list.
 		 */
 		if (pnset_check(exsetp, path)) {
-			return (0);
+			return (FTW_SKIP_SUBTREE);
 		}
 
 		/*

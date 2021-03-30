@@ -24,8 +24,9 @@
 
 GROPS = grops
 TROFF = troff
+VALGRIND = valgrind
 
-CPPFLAGS = -D_XOPEN_SOURCE=500
+CPPFLAGS = -D_XOPEN_SOURCE=500 -D_GNU_SOURCE
 CPARSEFLAGS = -Werror
 COPTFLAGS = -O2
 
@@ -43,3 +44,11 @@ findunref.1onbld.ps: findunref.1onbld
 
 clobber:
 	$(RM) -f findunref findunref.1onbld.ps
+
+check-valgrind:
+	if [[ ! -f build-start ]]; then \
+		echo "touch build-start to run findunref on tree"; \
+		exit 1; \
+	fi
+	$(VALGRIND) --track-origins=yes --leak-check=full --show-leak-kinds=all \
+		./findunref -t build-start . exception_list
