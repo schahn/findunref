@@ -238,13 +238,11 @@ hg_manifest(const char *hgroot)
 	}
 
 	(void) pclose(fp);
-	free(hgcmd);
 	return (pnsetp);
 fail:
 	warn("cannot load hg manifest at %s", hgroot);
 	if (fp != NULL)
 		(void) pclose(fp);
-	free(hgcmd);
 	pnset_free(pnsetp);
 	return (NULL);
 }
@@ -280,13 +278,11 @@ git_manifest(const char *gitroot)
 	}
 
 	(void) pclose(fp);
-	free(gitcmd);
 	return (pnsetp);
 fail:
 	warn("cannot load git manifest at %s", gitroot);
 	if (fp != NULL)
 		(void) pclose(fp);
-	free(gitcmd);
 	pnset_free(pnsetp);
 	return (NULL);
 }
