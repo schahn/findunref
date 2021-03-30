@@ -19,12 +19,13 @@
 .\"
 .\" Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 .\" Use is subject to license terms.
-.TH FINDUNREF 1ONBLD "Oct 30, 2012"
+.\" Copyright 2021 Stephen Hahn.
+.TH FINDUNREF 1ONBLD "Mar 30, 2021"
 .I findunref
 \- find unused files in a source tree
 .SH SYNOPSIS
 findunref [\fB-s\fP \fIsubtree\fP] [\fB-t\fP \fItstampfile\fP]
-[\fB-S\fP \fBhg\fP|\fBtw\fP|\fBgit\fP] \fIsrcroot\fP \fIexceptfile\fP
+[\fB-S\fP \fBhg\fP|\fBgit\fP] \fIsrcroot\fP \fIexceptfile\fP
 .SH DESCRIPTION
 .LP
 The findunref utility lists the files in a source tree which have not been
@@ -67,11 +68,10 @@ directories under \fIsrcroot\fP are examined.
 Consider files older than \fItstampfile\fP to be unreferenced.
 By default, \fIsrcroot\fB/.build.tstamp\fR is used.
 .TP 10
-.B -S \fBhg\fP|\fBtw\fP|\fBgit\fP
+.B -S \fBhg\fP|\fBgit\fP
 Only check files that are managed by the specified SCM.  To simplify
-interaction with \fBwhich_scm\fP(1ONBLD), the SCM names "mercurial" and
-"teamware" may also be specified for "hg" and "tw", respectively.
-By default, all files are checked.
+interaction with \fBwhich_scm\fP(1ONBLD), the SCM name "mercurial" may also be
+specified for "hg".  By default, all files are checked.
 .SH SEE ALSO
 .LP
 \fBgit\fP(1),
@@ -91,9 +91,9 @@ comm -12 /path/to/unref-i386.out
          /path/to/unref-sparc.out > unref.out
 .fi
 .LP
-This merged file can then be compared against the gate's latest
+This merged file can then be compared against the repository's latest
 unreferenced file list (e.g. \fB/ws/onnv-gate/usr/src/unrefmaster.out\fP).
 .LP
-Different gates have different unreferenced file policies.  Any changes to
+Different repositories have different unreferenced file policies.  Any changes to
 \fIexceptfile\fP that would define new unreferenced file policies for a
-given gate must be cleared with the appropriate gatekeepers.
+given repository must be cleared with the appropriate gatekeepers.

@@ -24,6 +24,7 @@
 
 /*
  * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2021 Stephen Hahn.
  */
 
 /*
@@ -31,19 +32,32 @@
  * permitted pathnames.
  */
 
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <alloca.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fnmatch.h>
 #include <ftw.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+
+/*
+ * Masquerade Illumos conventions.
+ */
+typedef bool boolean_t;
+#define B_TRUE true
+#define B_FALSE false
+
+#define strlcat strncat
+#define strlcpy strncpy
 
 /*
  * Pathname set: a simple datatype for storing pathname pattern globs and
@@ -88,12 +102,13 @@ static void	pnset_empty(pnset_t *);
 static void	pnset_free(pnset_t *);
 static int	checkpath(const char *, const struct stat *, int, struct FTW *);
 static pnset_t	*make_exset(const char *);
+
+static int	asprintf(char **, const char *, ...);
 static void	warn(const char *, ...);
 static void	die(const char *, ...);
 
+
 static const scm_t scms[] = {
-	{ "tw",		check_tw,	NULL		},
-	{ "teamware",	check_tw,	NULL		},
 	{ "hg",		check_scmdata,	chdir_hg 	},
 	{ "mercurial",	check_scmdata,	chdir_hg	},
 	{ "git",	check_scmdata,	chdir_git	},
@@ -110,8 +125,8 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	char path[MAXPATHLEN];
-	char subtree[MAXPATHLEN] = "./";
+	char path[MAXPATHLEN + 1];
+	char subtree[MAXPATHLEN + 1] = "./";
 	char *tstampfile = ".build.tstamp";
 	struct stat tsstat;
 
@@ -283,7 +298,7 @@ static void
 chdir_scmdata(const char *path, const char *meta,
     pnset_t *(*manifest_func)(const char *path))
 {
-	char scmpath[MAXPATHLEN];
+	char scmpath[MAXPATHLEN + 1];
 	char basepath[MAXPATHLEN];
 	char *slash;
 
@@ -325,7 +340,7 @@ chdir_scmdata(const char *path, const char *meta,
 				return;
 			}
 			*slash = '\0';
-			(void) snprintf(scmpath, MAXPATHLEN, "%s/%s", basepath,
+			(void) snprintf(scmpath, MAXPATHLEN + 1, "%s/%s", basepath,
 			    meta);
 		}
 
@@ -373,21 +388,6 @@ check_scmdata(const char *path, const struct FTW *ftwp)
 
 	return (scmdata.manifest != NULL && pnset_check(scmdata.manifest,
 	    path));
-}
-
-/*
- * Check if a file is under TeamWare control by checking for its corresponding
- * SCCS "s-dot" file.
- */
-static int
-check_tw(const char *path, const struct FTW *ftwp)
-{
-	char sccspath[MAXPATHLEN];
-
-	(void) snprintf(sccspath, MAXPATHLEN, "%.*s/SCCS/s.%s", ftwp->base,
-	    path, path + ftwp->base);
-
-	return (access(sccspath, F_OK) == 0);
 }
 
 /*
@@ -469,7 +469,6 @@ checkpath(const char *path, const struct stat *statp, int type,
 		 * Prune any directories in the exception list.
 		 */
 		if (pnset_check(exsetp, path)) {
-			ftwp->quit = FTW_PRUNE;
 			return (0);
 		}
 
@@ -602,4 +601,28 @@ die(const char *format, ...)
 		(void) fprintf(stderr, ": %s\n", errstr);
 
 	exit(EXIT_FAILURE);
+}
+
+
+/* PRINTFLIKE1 */
+static int
+asprintf(char **dstp, const char *format, ...)
+{
+	va_list alist;
+	size_t needed;
+	char *cp;
+
+	va_start(alist, format);
+	needed = vsnprintf(NULL, 0, format, alist);
+	va_end(alist);
+
+	cp = alloca(needed);
+
+	va_start(alist, format);
+	(void) vsnprintf(cp, needed, format, alist);
+	va_end(alist);
+
+	*dstp = cp;
+
+	return (0);
 }
